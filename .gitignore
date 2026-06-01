@@ -1,0 +1,18 @@
+# Ambiente
+.env
+
+# Binário compilado
+taskflow
+taskflow.exe
+
+# Dependências (Go baixa automaticamente com go mod)
+vendor/
+
+# Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store

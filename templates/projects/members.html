@@ -1,0 +1,82 @@
+{{define "projects/members"}}{{template "base" .}}{{end}}
+
+{{define "title"}}Membros{{end}}
+
+{{define "content"}}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="d-flex align-items-center mb-4">
+        <a href="/projects/{{.Project.ID}}" class="btn btn-sm btn-outline-secondary me-3">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+          <h2 class="h4 fw-bold mb-0">Membros</h2>
+          <p class="text-muted small mb-0">{{.Project.Title}}</p>
+        </div>
+      </div>
+
+      {{/* Adicionar membro — só owner */}}
+      {{if eq .Project.OwnerID .User.ID}}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-2"></i>Adicionar Membro</h6>
+          {{if .Error}}
+          <div class="alert alert-danger py-2 small">
+            <i class="bi bi-exclamation-circle me-1"></i>{{.Error}}
+          </div>
+          {{end}}
+          <form method="POST" action="/projects/{{.Project.ID}}/members" novalidate>
+            <div class="input-group">
+              <input type="email" name="email" class="form-control"
+                     placeholder="email@exemplo.com" required>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Adicionar
+              </button>
+            </div>
+            <div class="form-text">O usuário precisa ter conta no TaskFlow.</div>
+          </form>
+        </div>
+      </div>
+      {{end}}
+
+      {{/* Lista de membros */}}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-bottom py-3">
+          <span class="fw-bold">
+            <i class="bi bi-people me-2"></i>{{len .Project.Members}} membro{{if ne (len .Project.Members) 1}}s{{end}}
+          </span>
+        </div>
+        <ul class="list-group list-group-flush">
+          {{range .Project.Members}}
+          <li class="list-group-item d-flex align-items-center justify-content-between py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-circle bg-primary-subtle text-primary">
+                {{slice .Name 0 1}}
+              </div>
+              <div>
+                <div class="fw-semibold small">{{.Name}}</div>
+                <div class="text-muted" style="font-size:.8rem">{{.Email}}</div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {{if eq .ID $.Project.OwnerID}}
+              <span class="badge bg-primary-subtle text-primary rounded-pill">Criador</span>
+              {{else if eq $.Project.OwnerID $.User.ID}}
+              <form action="/projects/{{$.Project.ID}}/members/{{.ID}}/remove" method="POST"
+                    onsubmit="return confirm('Remover este membro?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-person-x"></i>
+                </button>
+              </form>
+              {{end}}
+            </div>
+          </li>
+          {{end}}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+{{end}}

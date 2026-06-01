@@ -1,0 +1,50 @@
+{{define "projects/new"}}{{template "base" .}}{{end}}
+
+{{define "title"}}Novo Projeto{{end}}
+
+{{define "content"}}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="d-flex align-items-center mb-4">
+        <a href="/projects" class="btn btn-sm btn-outline-secondary me-3">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="h4 fw-bold mb-0">Novo Projeto</h2>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          {{if .Error}}
+          <div class="alert alert-danger py-2 small">
+            <i class="bi bi-exclamation-circle me-1"></i>{{.Error}}
+          </div>
+          {{end}}
+
+          <form method="POST" action="/projects" novalidate>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control"
+                     placeholder="Ex: Trabalho de Redes"
+                     value="{{if .Input}}{{.Input.Title}}{{end}}"
+                     required minlength="3" maxlength="200" autofocus>
+              <div class="form-text">Mínimo 3 caracteres.</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Descrição</label>
+              <textarea name="description" class="form-control" rows="4"
+                        placeholder="Descreva brevemente o objetivo do projeto...">{{if .Input}}{{.Input.Description}}{{end}}</textarea>
+            </div>
+            <div class="d-grid gap-2 d-sm-flex">
+              <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="bi bi-folder-plus me-1"></i>Criar Projeto
+              </button>
+              <a href="/projects" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,174 @@
+{{define "projects/show"}}{{template "base" .}}{{end}}
+
+{{define "title"}}{{.Project.Title}}{{end}}
+
+{{define "content"}}
+<div class="container-fluid px-3 px-md-4">
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div class="d-flex align-items-center gap-2">
+      <a href="/projects" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h1 class="h4 fw-bold mb-0">{{.Project.Title}}</h1>
+        {{if .Project.Description}}
+        <p class="text-muted small mb-0">{{.Project.Description}}</p>
+        {{end}}
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/projects/{{.Project.ID}}/members" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-people me-1"></i>Membros ({{len .Project.Members}})
+      </a>
+      <a href="/projects/{{.Project.ID}}/tasks/new" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nova Tarefa
+      </a>
+      {{if eq .Project.OwnerID .User.ID}}
+      <form action="/projects/{{.Project.ID}}/delete" method="POST"
+            onsubmit="return confirm('Excluir este projeto?')">
+        <button type="submit" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash me-1"></i>Excluir
+        </button>
+      </form>
+      {{end}}
+    </div>
+  </div>
+
+  {{/* Resumo */}}
+  <div class="row g-2 mb-4">
+    <div class="col-4">
+      <div class="card border-0 text-center py-2 bg-warning-subtle">
+        <div class="fw-bold fs-4 text-warning-emphasis">{{len .Todo}}</div>
+        <div class="small text-muted">A Fazer</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card border-0 text-center py-2 bg-info-subtle">
+        <div class="fw-bold fs-4 text-info-emphasis">{{len .InProgress}}</div>
+        <div class="small text-muted">Em Andamento</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card border-0 text-center py-2 bg-success-subtle">
+        <div class="fw-bold fs-4 text-success-emphasis">{{len .Done}}</div>
+        <div class="small text-muted">Concluídas</div>
+      </div>
+    </div>
+  </div>
+
+  {{/* Quadro Kanban */}}
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="kanban-col">
+        <div class="kanban-header bg-warning-subtle text-warning-emphasis">
+          <i class="bi bi-circle me-1"></i>A Fazer
+          <span class="badge bg-warning text-dark ms-auto">{{len .Todo}}</span>
+        </div>
+        <div class="kanban-body">
+          {{range .Todo}}{{template "task-card" .}}{{end}}
+          {{if not .Todo}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="kanban-col">
+        <div class="kanban-header bg-info-subtle text-info-emphasis">
+          <i class="bi bi-arrow-repeat me-1"></i>Em Andamento
+          <span class="badge bg-info text-dark ms-auto">{{len .InProgress}}</span>
+        </div>
+        <div class="kanban-body">
+          {{range .InProgress}}{{template "task-card" .}}{{end}}
+          {{if not .InProgress}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="kanban-col">
+        <div class="kanban-header bg-success-subtle text-success-emphasis">
+          <i class="bi bi-check-circle me-1"></i>Concluído
+          <span class="badge bg-success ms-auto">{{len .Done}}</span>
+        </div>
+        <div class="kanban-body">
+          {{range .Done}}{{template "task-card" .}}{{end}}
+          {{if not .Done}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{{end}}
+
+{{/* Card de tarefa — nível raiz para ser reutilizável */}}
+{{define "task-card"}}
+<div class="task-card">
+  <div class="d-flex justify-content-between align-items-start mb-1">
+    <span class="fw-semibold small">{{.Title}}</span>
+    <div class="dropdown ms-2">
+      <button class="btn btn-sm btn-light border-0 py-0 px-1" data-bs-toggle="dropdown">
+        <i class="bi bi-three-dots-vertical small"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size:.85rem">
+        <li>
+          <a class="dropdown-item" href="/projects/{{.ProjectID}}/tasks/{{.ID}}/edit">
+            <i class="bi bi-pencil me-2 text-secondary"></i>Editar
+          </a>
+        </li>
+        <li><hr class="dropdown-divider my-1"></li>
+        {{if ne .Status "todo"}}
+        <li>
+          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+            <input type="hidden" name="status" value="todo">
+            <button type="submit" class="dropdown-item">
+              <i class="bi bi-circle me-2 text-warning"></i>Mover para A Fazer
+            </button>
+          </form>
+        </li>
+        {{end}}
+        {{if ne .Status "in_progress"}}
+        <li>
+          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+            <input type="hidden" name="status" value="in_progress">
+            <button type="submit" class="dropdown-item">
+              <i class="bi bi-arrow-repeat me-2 text-info"></i>Mover para Em Andamento
+            </button>
+          </form>
+        </li>
+        {{end}}
+        {{if ne .Status "done"}}
+        <li>
+          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+            <input type="hidden" name="status" value="done">
+            <button type="submit" class="dropdown-item">
+              <i class="bi bi-check-circle me-2 text-success"></i>Marcar como Concluído
+            </button>
+          </form>
+        </li>
+        {{end}}
+        <li><hr class="dropdown-divider my-1"></li>
+        <li>
+          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/delete" method="POST"
+                onsubmit="return confirm('Excluir tarefa?')">
+            <button type="submit" class="dropdown-item text-danger">
+              <i class="bi bi-trash me-2"></i>Excluir
+            </button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+  {{if .Description}}
+  <p class="text-muted mb-2" style="font-size:.8rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+    {{.Description}}
+  </p>
+  {{end}}
+  {{if .Assignee}}
+  <div class="small text-muted" style="font-size:.78rem">
+    <i class="bi bi-person-fill me-1"></i>{{.Assignee.Name}}
+  </div>
+  {{end}}
+</div>
+{{end}}
