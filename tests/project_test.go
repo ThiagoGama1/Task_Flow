@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// loginAndGetCookie registra + loga um usuário e retorna o cookie de sessão.
 func loginAndGetCookie(t *testing.T, env *testEnv, email, password string) *http.Cookie {
 	t.Helper()
 

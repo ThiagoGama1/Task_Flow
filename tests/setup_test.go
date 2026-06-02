@@ -40,7 +40,6 @@ func newTestEnv(t *testing.T) *testEnv {
 	authMW := middleware.NewAuthMiddleware(userRepo)
 	r.Use(authMW.LoadUser())
 
-	// Renderer mínimo para testes (sem templates reais)
 	r.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"ok": true}) })
 
 	authH := handlers.NewAuthHandler(userRepo)
@@ -59,14 +58,12 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 }
 
-// seedUser cria um usuário nos mocks e retorna o modelo.
 func (e *testEnv) seedUser(name, email, password string) *models.User {
 	u := &models.User{Name: name, Email: email, Password: password}
 	_ = e.userRepo.Create(u)
 	return u
 }
 
-// seedProject cria projeto e adiciona o owner como membro.
 func (e *testEnv) seedProject(title string, ownerID uint) *models.Project {
 	p := &models.Project{Title: title, OwnerID: ownerID}
 	_ = e.projectRepo.Create(p)

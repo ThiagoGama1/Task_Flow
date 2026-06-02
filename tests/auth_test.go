@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// seedHashedUser insere um usuário com senha hashada (bcrypt) para testar login real.
 func seedHashedUser(t *testing.T, env *testEnv, email, plainPassword string) *models.User {
 	t.Helper()
 	hashed, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.MinCost)

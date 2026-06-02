@@ -5,8 +5,6 @@ import (
 	"taskflow/internal/models"
 )
 
-// ─── Mock UserRepository ────────────────────────────────────────────────────
-
 type mockUserRepo struct {
 	users  map[uint]*models.User
 	nextID uint
@@ -43,8 +41,6 @@ func (m *mockUserRepo) FindByID(id uint) (*models.User, error) {
 	}
 	return nil, errors.New("not found")
 }
-
-// ─── Mock ProjectRepository ─────────────────────────────────────────────────
 
 type mockProjectRepo struct {
 	projects map[uint]*models.Project
@@ -115,8 +111,6 @@ func (m *mockProjectRepo) Delete(id uint) error {
 	delete(m.members, id)
 	return nil
 }
-
-// ─── Mock TaskRepository ────────────────────────────────────────────────────
 
 type mockTaskRepo struct {
 	tasks  map[uint]*models.Task

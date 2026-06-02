@@ -16,7 +16,6 @@ func NewAuthMiddleware(userRepo repositories.UserRepository) *AuthMiddleware {
 	return &AuthMiddleware{userRepo: userRepo}
 }
 
-// LoadUser injeta o usuário autenticado no contexto sem bloquear requisições anônimas.
 func (m *AuthMiddleware) LoadUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
@@ -32,7 +31,6 @@ func (m *AuthMiddleware) LoadUser() gin.HandlerFunc {
 	}
 }
 
-// Required bloqueia requisições não autenticadas.
 func Required() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, exists := c.Get("current_user"); !exists {

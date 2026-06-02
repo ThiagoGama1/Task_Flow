@@ -18,13 +18,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// App encapsula o roteador e a conexão com o banco — equivalente ao create_app() do Flask.
 type App struct {
 	Router *gin.Engine
 	DB     *gorm.DB
 }
 
-// NewApp inicializa banco, repositórios, handlers e rotas de forma centralizada.
 func NewApp(cfg *config.Config) (*App, error) {
 	gin.SetMode(cfg.GinMode)
 
