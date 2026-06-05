@@ -140,6 +140,16 @@ func (m *mockTaskRepo) Update(t *models.Task) error {
 	return nil
 }
 
+func (m *mockTaskRepo) FindAssignedTo(userID uint) ([]models.Task, error) {
+	var out []models.Task
+	for _, t := range m.tasks {
+		if t.AssigneeID != nil && *t.AssigneeID == userID {
+			out = append(out, *t)
+		}
+	}
+	return out, nil
+}
+
 func (m *mockTaskRepo) Delete(id uint) error {
 	delete(m.tasks, id)
 	return nil

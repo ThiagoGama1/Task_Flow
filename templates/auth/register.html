@@ -1,57 +1,65 @@
 {{define "register"}}{{template "base" .}}{{end}}
 
-{{define "title"}}Cadastro{{end}}
+{{define "title"}}Criar conta{{end}}
+
+{{define "main-class"}}auth-wrap{{end}}
 
 {{define "content"}}
 <div class="container">
-  <div class="row justify-content-center mt-5">
+  <div class="row justify-content-center">
     <div class="col-md-5 col-lg-4">
-      <div class="card shadow border-0">
+      <div class="card auth-card">
         <div class="card-body p-4 p-md-5">
           <div class="text-center mb-4">
-            <i class="bi bi-kanban-fill text-primary" style="font-size:2.5rem"></i>
-            <h2 class="h4 mt-2 fw-bold">Criar conta</h2>
+            <div class="auth-logo-mark">
+              <i class="bi bi-kanban-fill"></i>
+            </div>
+            <h2 class="h5 fw-bold mb-1">Criar conta</h2>
+            <p class="text-muted small mb-0">Comece a gerenciar seus projetos</p>
           </div>
 
           {{if .Error}}
-          <div class="alert alert-danger py-2 small">
+          <div class="alert alert-danger py-2 small mb-3">
             <i class="bi bi-exclamation-circle me-1"></i>{{.Error}}
           </div>
           {{end}}
 
           <form method="POST" action="/auth/register" novalidate>
             <div class="mb-3">
-              <label class="form-label fw-semibold small">Nome completo</label>
+              <label class="form-label">Nome completo</label>
               <input type="text" name="name" class="form-control"
                      placeholder="Seu Nome"
                      value="{{if .Input}}{{.Input.Name}}{{end}}" required autofocus>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-semibold small">E-mail</label>
+              <label class="form-label">E-mail</label>
               <input type="email" name="email" class="form-control"
                      placeholder="seu@email.com"
                      value="{{if .Input}}{{.Input.Email}}{{end}}" required>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-semibold small">Senha <span class="text-muted">(mínimo 6 caracteres)</span></label>
+              <label class="form-label">
+                Senha
+                <span class="text-muted fw-normal" style="font-size:.8rem">(mín. 6 caracteres)</span>
+              </label>
               <input type="password" name="password" class="form-control"
                      placeholder="••••••" required minlength="6">
             </div>
             <div class="mb-4">
-              <label class="form-label fw-semibold small">Confirmar senha</label>
+              <label class="form-label">Confirmar senha</label>
               <input type="password" name="password_confirm" class="form-control"
                      placeholder="••••••" required>
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-person-plus me-1"></i>Criar conta
+                Criar conta <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
           </form>
 
-          <p class="text-center mt-3 mb-0 small text-muted">
+          <p class="text-center mt-4 mb-0 small text-muted">
             Já tem conta?
-            <a href="/auth/login" class="text-primary fw-semibold">Entrar</a>
+            <a href="/auth/login" class="fw-semibold text-decoration-none" style="color:var(--accent)">Entrar</a>
           </p>
         </div>
       </div>

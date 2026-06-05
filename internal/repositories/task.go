@@ -31,6 +31,15 @@ func (r *taskRepo) Update(task *models.Task) error {
 	return r.db.Save(task).Error
 }
 
+func (r *taskRepo) FindAssignedTo(userID uint) ([]models.Task, error) {
+	var tasks []models.Task
+	err := r.db.Preload("Project").Preload("Assignee").
+		Where("assignee_id = ? AND deleted_at IS NULL", userID).
+		Order("due_date ASC").
+		Find(&tasks).Error
+	return tasks, err
+}
+
 func (r *taskRepo) Delete(id uint) error {
 	return r.db.Delete(&models.Task{}, id).Error
 }

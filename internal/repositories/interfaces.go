@@ -22,6 +22,7 @@ type ProjectRepository interface {
 type TaskRepository interface {
 	Create(task *models.Task) error
 	FindByID(id uint) (*models.Task, error)
+	FindAssignedTo(userID uint) ([]models.Task, error)
 	Update(task *models.Task) error
 	Delete(id uint) error
 }

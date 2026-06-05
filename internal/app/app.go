@@ -10,6 +10,7 @@ import (
 	"taskflow/internal/middleware"
 	"taskflow/internal/repositories"
 	"taskflow/internal/routes"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -44,6 +45,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	authHandler := handlers.NewAuthHandler(userRepo)
 	projectHandler := handlers.NewProjectHandler(projectRepo, userRepo)
 	taskHandler := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo)
+	dashboardHandler := handlers.NewDashboardHandler(taskRepo)
 
 	r := gin.Default()
 
@@ -58,7 +60,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	r.GET("/", func(c *gin.Context) {
 		if _, ok := c.Get("current_user"); ok {
-			c.Redirect(http.StatusFound, "/projects")
+			c.Redirect(http.StatusFound, "/dashboard")
 		} else {
 			c.Redirect(http.StatusFound, "/auth/login")
 		}
@@ -67,6 +69,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	routes.RegisterAuth(r, authHandler)
 	routes.RegisterProjects(r, projectHandler)
 	routes.RegisterTasks(r, taskHandler)
+	routes.RegisterDashboard(r, dashboardHandler)
 
 	return &App{Router: r, DB: db}, nil
 }
@@ -77,6 +80,24 @@ var funcMap = template.FuncMap{
 			return 0
 		}
 		return *p
+	},
+	"formatDate": func(t *time.Time) string {
+		if t == nil {
+			return ""
+		}
+		return t.Local().Format("02/01/2006")
+	},
+	"isOverdue": func(t *time.Time) bool {
+		if t == nil {
+			return false
+		}
+		return t.Format("2006-01-02") < time.Now().Format("2006-01-02")
+	},
+	"inputDate": func(t *time.Time) string {
+		if t == nil {
+			return ""
+		}
+		return t.Local().Format("2006-01-02")
 	},
 }
 
@@ -94,7 +115,7 @@ func buildRenderer() render.HTMLRender {
 	base := "templates/layout/base.html"
 
 	add := func(name, path string) {
-		r[name] = template.Must(template.New(name).ParseFiles(base, path))
+		r[name] = template.Must(template.New(name).Funcs(funcMap).ParseFiles(base, path))
 	}
 
 	add("login", "templates/auth/login.html")
@@ -104,7 +125,8 @@ func buildRenderer() render.HTMLRender {
 	add("projects/show", "templates/projects/show.html")
 	add("projects/members", "templates/projects/members.html")
 	add("tasks/new", "templates/tasks/new.html")
-	r["tasks/edit"] = template.Must(template.New("tasks/edit").Funcs(funcMap).ParseFiles(base, "templates/tasks/edit.html"))
+	add("tasks/edit", "templates/tasks/edit.html")
+	add("dashboard", "templates/dashboard.html")
 	add("error", "templates/error.html")
 
 	return r

@@ -165,10 +165,22 @@
     {{.Description}}
   </p>
   {{end}}
-  {{if .Assignee}}
-  <div class="small text-muted" style="font-size:.78rem">
-    <i class="bi bi-person-fill me-1"></i>{{.Assignee.Name}}
+  <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+    {{if eq .Priority "high"}}
+    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:.7rem">Alta</span>
+    {{else if eq .Priority "low"}}
+    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:.7rem">Baixa</span>
+    {{end}}
+    {{if .DueDate}}
+    <span class="badge {{if isOverdue .DueDate}}bg-danger text-white{{else}}bg-light text-dark border{{end}}" style="font-size:.7rem">
+      <i class="bi bi-calendar3 me-1"></i>{{formatDate .DueDate}}
+    </span>
+    {{end}}
+    {{if .Assignee}}
+    <span class="text-muted" style="font-size:.78rem">
+      <i class="bi bi-person-fill me-1"></i>{{.Assignee.Name}}
+    </span>
+    {{end}}
   </div>
-  {{end}}
 </div>
 {{end}}

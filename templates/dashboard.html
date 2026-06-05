@@ -1,0 +1,105 @@
+{{define "dashboard"}}{{template "base" .}}{{end}}
+
+{{define "title"}}Dashboard{{end}}
+
+{{define "content"}}
+<div class="container">
+
+  <div class="dash-greeting mb-4">
+    <h1 class="h4 fw-bold mb-0">Olá, {{.User.Name}}</h1>
+    <p class="text-muted small mb-0">Suas tarefas atribuídas</p>
+  </div>
+
+  {{if .Overdue}}
+  <div class="mb-4 dash-section-overdue">
+    <h2 class="h6 fw-bold text-danger mb-2">
+      <i class="bi bi-exclamation-circle-fill me-1"></i>Atrasadas
+      <span class="badge bg-danger ms-1">{{len .Overdue}}</span>
+    </h2>
+    <div class="row g-2">
+      {{range .Overdue}}{{template "dash-card" .}}{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{if .DueToday}}
+  <div class="mb-4 dash-section-today">
+    <h2 class="h6 fw-bold text-warning-emphasis mb-2">
+      <i class="bi bi-clock-fill me-1"></i>Vencem hoje
+      <span class="badge bg-warning text-dark ms-1">{{len .DueToday}}</span>
+    </h2>
+    <div class="row g-2">
+      {{range .DueToday}}{{template "dash-card" .}}{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{if .Upcoming}}
+  <div class="mb-4 dash-section-upcoming">
+    <h2 class="h6 fw-bold text-secondary mb-2">
+      <i class="bi bi-calendar3 me-1"></i>Próximas
+    </h2>
+    <div class="row g-2">
+      {{range .Upcoming}}{{template "dash-card" .}}{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{if .NoDue}}
+  <div class="mb-4 dash-section-nodue">
+    <h2 class="h6 fw-bold text-secondary mb-2">
+      <i class="bi bi-list-task me-1"></i>Sem prazo definido
+    </h2>
+    <div class="row g-2">
+      {{range .NoDue}}{{template "dash-card" .}}{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{if and (not .Overdue) (not .DueToday) (not .Upcoming) (not .NoDue)}}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-check2-all fs-1 d-block mb-2"></i>
+    Nenhuma tarefa atribuída a você no momento.
+    <div class="mt-2">
+      <a href="/projects" class="btn btn-sm btn-outline-primary">Ver projetos</a>
+    </div>
+  </div>
+  {{end}}
+
+</div>
+{{end}}
+
+{{define "dash-card"}}
+<div class="col-md-6 col-lg-4">
+  <div class="card border-0 shadow-sm h-100">
+    <div class="card-body py-3 px-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <a href="/projects/{{.ProjectID}}" class="fw-semibold small text-decoration-none text-dark">{{.Title}}</a>
+        {{if eq .Priority "high"}}
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2" style="font-size:.7rem;white-space:nowrap">Alta</span>
+        {{else if eq .Priority "low"}}
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-2" style="font-size:.7rem;white-space:nowrap">Baixa</span>
+        {{else}}
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2" style="font-size:.7rem;white-space:nowrap">Média</span>
+        {{end}}
+      </div>
+      <div class="text-muted mt-1" style="font-size:.78rem">
+        <i class="bi bi-folder2 me-1"></i>{{.Project.Title}}
+      </div>
+      {{if .DueDate}}
+      <div class="mt-1 {{if isOverdue .DueDate}}text-danger{{else}}text-muted{{end}}" style="font-size:.78rem">
+        <i class="bi bi-calendar3 me-1"></i>{{formatDate .DueDate}}
+        {{if isOverdue .DueDate}}<span class="fw-semibold">(atrasada)</span>{{end}}
+      </div>
+      {{end}}
+      <div class="mt-2">
+        {{if eq .Status "todo"}}
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:.7rem">A Fazer</span>
+        {{else if eq .Status "in_progress"}}
+        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size:.7rem">Em Andamento</span>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

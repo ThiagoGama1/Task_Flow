@@ -46,6 +46,21 @@
                 {{end}}
               </select>
             </div>
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Prioridade <span class="text-danger">*</span></label>
+                <select name="priority" class="form-select" required>
+                  <option value="low"    {{if eq .Task.Priority "low"}}selected{{end}}>Baixa</option>
+                  <option value="medium" {{if eq .Task.Priority "medium"}}selected{{end}}>Média</option>
+                  <option value="high"   {{if eq .Task.Priority "high"}}selected{{end}}>Alta</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Prazo</label>
+                <input type="date" name="due_date" class="form-control"
+                       value="{{inputDate .Task.DueDate}}">
+              </div>
+            </div>
             <div class="mb-4">
               <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
               <select name="status" class="form-select" required>

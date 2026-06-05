@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"taskflow/internal/models"
 	"taskflow/internal/repositories"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +29,8 @@ type TaskInput struct {
 	Description string `form:"description"`
 	AssigneeID  string `form:"assignee_id"`
 	Status      string `form:"status"      binding:"required,oneof=todo in_progress done"`
+	Priority    string `form:"priority"    binding:"required,oneof=low medium high"`
+	DueDate     string `form:"due_date"`
 }
 
 func (h *TaskHandler) New(c *gin.Context) {
@@ -73,8 +76,10 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		Title:       input.Title,
 		Description: input.Description,
 		Status:      input.Status,
+		Priority:    input.Priority,
 		ProjectID:   projectID,
 		AssigneeID:  parseOptionalID(input.AssigneeID),
+		DueDate:     parseDate(input.DueDate),
 	}
 
 	_ = h.taskRepo.Create(task)
@@ -138,7 +143,10 @@ func (h *TaskHandler) Update(c *gin.Context) {
 	task.Title = input.Title
 	task.Description = input.Description
 	task.Status = input.Status
+	task.Priority = input.Priority
 	task.AssigneeID = parseOptionalID(input.AssigneeID)
+	task.Assignee = nil // evita que GORM sobrescreva AssigneeID com a associação antiga
+	task.DueDate = parseDate(input.DueDate)
 
 	_ = h.taskRepo.Update(task)
 	c.Redirect(http.StatusFound, "/projects/"+c.Param("id"))
@@ -191,6 +199,19 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 
 	_ = h.taskRepo.Delete(task.ID)
 	c.Redirect(http.StatusFound, "/projects/"+c.Param("id"))
+}
+
+func parseDate(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return nil
+	}
+	// Armazena ao meio-dia UTC para evitar deslocamentos de fuso
+	noon := time.Date(t.Year(), t.Month(), t.Day(), 12, 0, 0, 0, time.UTC)
+	return &noon
 }
 
 func parseOptionalID(s string) *uint {
