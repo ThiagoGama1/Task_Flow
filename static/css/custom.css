@@ -936,6 +936,13 @@ hr, .dropdown-divider { border-color: var(--border) !important; }
 }
 .sort-btn:hover { color: rgba(255,255,255,.7); }
 .sort-btn.active { color: var(--accent); }
+.sort-btn .sort-dir {
+  font-size: .65em;
+  font-weight: 700;
+  margin-left: 1px;
+  vertical-align: middle;
+  line-height: 1;
+}
 [data-theme="light"] .sort-btn { color: rgba(0,0,0,.25); }
 [data-theme="light"] .sort-btn:hover { color: rgba(0,0,0,.6); }
 

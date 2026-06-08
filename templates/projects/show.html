@@ -80,8 +80,8 @@
         <div class="kanban-header bg-warning-subtle text-warning-emphasis">
           <i class="bi bi-circle me-1"></i>A Fazer
           <span class="badge bg-warning text-dark ms-auto">{{len .Todo}}</span>
-          <button class="sort-btn ms-1" data-col="todo" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
-          <button class="sort-btn" data-col="todo" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
+          <button class="sort-btn ms-1" data-col="todo" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i><span class="sort-dir"></span></button>
+          <button class="sort-btn" data-col="todo" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i><span class="sort-dir"></span></button>
         </div>
         <div class="kanban-body" data-status="todo">
           {{range .Todo}}{{template "task-card" .}}{{end}}
@@ -95,8 +95,8 @@
         <div class="kanban-header bg-info-subtle text-info-emphasis">
           <i class="bi bi-arrow-repeat me-1"></i>Em Andamento
           <span class="badge bg-info text-dark ms-auto">{{len .InProgress}}</span>
-          <button class="sort-btn ms-1" data-col="in_progress" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
-          <button class="sort-btn" data-col="in_progress" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
+          <button class="sort-btn ms-1" data-col="in_progress" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i><span class="sort-dir"></span></button>
+          <button class="sort-btn" data-col="in_progress" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i><span class="sort-dir"></span></button>
         </div>
         <div class="kanban-body" data-status="in_progress">
           {{range .InProgress}}{{template "task-card" .}}{{end}}
@@ -110,8 +110,8 @@
         <div class="kanban-header bg-success-subtle text-success-emphasis">
           <i class="bi bi-check-circle me-1"></i>Concluído
           <span class="badge bg-success ms-auto">{{len .Done}}</span>
-          <button class="sort-btn ms-1" data-col="done" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
-          <button class="sort-btn" data-col="done" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
+          <button class="sort-btn ms-1" data-col="done" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i><span class="sort-dir"></span></button>
+          <button class="sort-btn" data-col="done" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i><span class="sort-dir"></span></button>
         </div>
         <div class="kanban-body" data-status="done">
           {{range .Done}}{{template "task-card" .}}{{end}}
@@ -331,6 +331,11 @@ if (searchInput) {
 var priorityOrder = {high: 0, medium: 1, low: 2};
 var sortState = {};
 
+var originalOrder = {};
+document.querySelectorAll('.kanban-body').forEach(function(body) {
+  originalOrder[body.dataset.status] = Array.from(body.querySelectorAll('.task-card'));
+});
+
 document.querySelectorAll('.sort-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var colStatus = this.dataset.col;
@@ -339,30 +344,41 @@ document.querySelectorAll('.sort-btn').forEach(function(btn) {
     var body = document.querySelector('.kanban-body[data-status="' + colStatus + '"]');
     if (!body) return;
 
-    var dir = sortState[key] === 'asc' ? 'desc' : 'asc';
+    var cur = sortState[key];
+    var dir = cur == null ? 'asc' : cur === 'asc' ? 'desc' : null;
     sortState[key] = dir;
-
-    var cards = Array.from(body.querySelectorAll('.task-card'));
-    cards.sort(function(a, b) {
-      var result;
-      if (sortBy === 'priority') {
-        var pa = priorityOrder[a.dataset.priority] != null ? priorityOrder[a.dataset.priority] : 1;
-        var pb = priorityOrder[b.dataset.priority] != null ? priorityOrder[b.dataset.priority] : 1;
-        result = pa - pb;
-      } else {
-        var da = a.dataset.due || '9999-99-99';
-        var db = b.dataset.due || '9999-99-99';
-        result = da < db ? -1 : da > db ? 1 : 0;
-      }
-      return dir === 'desc' ? -result : result;
-    });
-    cards.forEach(function(c) { body.appendChild(c); });
 
     document.querySelectorAll('.sort-btn[data-col="' + colStatus + '"]').forEach(function(b) {
       b.classList.remove('active');
+      b.querySelector('.sort-dir').textContent = '';
+      b.title = b.dataset.sort === 'priority' ? 'Ordenar por prioridade' : 'Ordenar por prazo';
     });
-    this.classList.add('active');
-    this.title = (sortBy === 'priority' ? 'Prioridade' : 'Prazo') + (dir === 'asc' ? ' ↑' : ' ↓');
+
+    if (dir === null) {
+      originalOrder[colStatus].forEach(function(c) { body.appendChild(c); });
+    } else {
+      var cards = Array.from(originalOrder[colStatus]);
+      cards.sort(function(a, b) {
+        var result;
+        if (sortBy === 'priority') {
+          var pa = priorityOrder[a.dataset.priority] != null ? priorityOrder[a.dataset.priority] : 1;
+          var pb = priorityOrder[b.dataset.priority] != null ? priorityOrder[b.dataset.priority] : 1;
+          result = pa - pb;
+        } else {
+          var da = a.dataset.due || '9999-99-99';
+          var db = b.dataset.due || '9999-99-99';
+          result = da < db ? -1 : da > db ? 1 : 0;
+        }
+        return dir === 'desc' ? -result : result;
+      });
+      cards.forEach(function(c) { body.appendChild(c); });
+      this.classList.add('active');
+      this.querySelector('.sort-dir').textContent = dir === 'asc' ? '↑' : '↓';
+      var label = sortBy === 'priority'
+        ? (dir === 'asc' ? 'Prioridade: Alta → Baixa' : 'Prioridade: Baixa → Alta')
+        : (dir === 'asc' ? 'Prazo: Mais próximo primeiro' : 'Prazo: Mais distante primeiro');
+      this.title = label;
+    }
   });
 });
 
