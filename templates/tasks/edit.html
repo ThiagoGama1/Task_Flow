@@ -78,6 +78,42 @@
           </form>
         </div>
       </div>
+
+      {{/* Seção de comentários */}}
+      <div class="mt-4 pb-4">
+        <h6 class="fw-bold mb-3" style="color:var(--text-bright)">
+          <i class="bi bi-chat-text me-2" style="color:var(--accent)"></i>Comentários
+          {{if .Comments}}<span class="ms-1" style="background:rgba(255,255,255,.08);color:var(--muted);font-size:.7rem;padding:.15rem .5rem;border-radius:4px;font-weight:400">{{len .Comments}}</span>{{end}}
+        </h6>
+
+        {{if .Comments}}
+        <div class="comments-list mb-3">
+          {{range .Comments}}
+          <div class="comment-item">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <div class="avatar-circle" style="width:26px;height:26px;font-size:.7rem;flex-shrink:0">{{printf "%.1s" .User.Name}}</div>
+              <span class="fw-semibold small" style="color:var(--text-bright)">{{.User.Name}}</span>
+              <span class="text-muted" style="font-size:.74rem">{{.CreatedAt.Format "02/01/2006 15:04"}}</span>
+            </div>
+            <p class="comment-content mb-0">{{.Content}}</p>
+          </div>
+          {{end}}
+        </div>
+        {{else}}
+        <p class="text-muted small fst-italic mb-3">Nenhum comentário ainda.</p>
+        {{end}}
+
+        <form method="POST" action="/projects/{{.Project.ID}}/tasks/{{.Task.ID}}/comments">
+          <div class="mb-2">
+            <textarea name="content" class="form-control" rows="2"
+                      placeholder="Escreva um comentário..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-send me-1"></i>Comentar
+          </button>
+        </form>
+      </div>
+
     </div>
   </div>
 </div>

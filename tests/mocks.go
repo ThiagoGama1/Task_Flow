@@ -3,6 +3,7 @@ package tests
 import (
 	"errors"
 	"taskflow/internal/models"
+	"time"
 )
 
 type mockUserRepo struct {
@@ -42,9 +43,40 @@ func (m *mockUserRepo) FindByID(id uint) (*models.User, error) {
 	return nil, errors.New("not found")
 }
 
+func (m *mockUserRepo) Update(u *models.User) error {
+	m.users[u.ID] = u
+	return nil
+}
+
+type mockCommentRepo struct {
+	comments map[uint]*models.Comment
+	nextID   uint
+}
+
+func newMockCommentRepo() *mockCommentRepo {
+	return &mockCommentRepo{comments: make(map[uint]*models.Comment), nextID: 1}
+}
+
+func (m *mockCommentRepo) Create(c *models.Comment) error {
+	c.ID = m.nextID
+	m.nextID++
+	m.comments[c.ID] = c
+	return nil
+}
+
+func (m *mockCommentRepo) FindByTaskID(taskID uint) ([]models.Comment, error) {
+	var out []models.Comment
+	for _, c := range m.comments {
+		if c.TaskID == taskID {
+			out = append(out, *c)
+		}
+	}
+	return out, nil
+}
+
 type mockProjectRepo struct {
 	projects map[uint]*models.Project
-	members  map[uint]map[uint]bool // projectID → set of userIDs
+	members  map[uint]map[uint]bool
 	nextID   uint
 }
 
@@ -153,4 +185,37 @@ func (m *mockTaskRepo) FindAssignedTo(userID uint) ([]models.Task, error) {
 func (m *mockTaskRepo) Delete(id uint) error {
 	delete(m.tasks, id)
 	return nil
+}
+
+type mockActivityRepo struct {
+	logs   []*models.ActivityLog
+	nextID uint
+}
+
+func newMockActivityRepo() *mockActivityRepo {
+	return &mockActivityRepo{nextID: 1}
+}
+
+func (m *mockActivityRepo) Create(log *models.ActivityLog) error {
+	log.ID = m.nextID
+	m.nextID++
+	m.logs = append(m.logs, log)
+	return nil
+}
+
+func (m *mockActivityRepo) FindByProjectID(projectID uint, limit int) ([]models.ActivityLog, error) {
+	var out []models.ActivityLog
+	for _, l := range m.logs {
+		if l.ProjectID == projectID {
+			out = append(out, *l)
+		}
+	}
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
+}
+
+func (m *mockActivityRepo) CountForUser(userID uint, since time.Time) (int64, error) {
+	return 0, nil
 }

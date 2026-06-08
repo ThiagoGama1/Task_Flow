@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"taskflow/internal/database"
 	"taskflow/internal/handlers"
 	"taskflow/internal/middleware"
+	"taskflow/internal/models"
 	"taskflow/internal/repositories"
 	"taskflow/internal/routes"
 	"time"
@@ -41,11 +43,14 @@ func NewApp(cfg *config.Config) (*App, error) {
 	userRepo := repositories.NewUserRepository(db)
 	projectRepo := repositories.NewProjectRepository(db)
 	taskRepo := repositories.NewTaskRepository(db)
+	commentRepo := repositories.NewCommentRepository(db)
+	activityRepo := repositories.NewActivityRepository(db)
 
 	authHandler := handlers.NewAuthHandler(userRepo)
-	projectHandler := handlers.NewProjectHandler(projectRepo, userRepo)
-	taskHandler := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo)
+	projectHandler := handlers.NewProjectHandler(projectRepo, userRepo, activityRepo)
+	taskHandler := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo, commentRepo, activityRepo)
 	dashboardHandler := handlers.NewDashboardHandler(taskRepo)
+	profileHandler := handlers.NewProfileHandler(userRepo)
 
 	r := gin.Default()
 
@@ -62,14 +67,22 @@ func NewApp(cfg *config.Config) (*App, error) {
 		if _, ok := c.Get("current_user"); ok {
 			c.Redirect(http.StatusFound, "/dashboard")
 		} else {
-			c.Redirect(http.StatusFound, "/auth/login")
+			c.HTML(http.StatusOK, "landing", gin.H{"Title": "TaskFlow"})
 		}
+	})
+
+	r.GET("/api/notifications", middleware.Required(), func(c *gin.Context) {
+		user := c.MustGet("current_user").(*models.User)
+		since := time.Now().Add(-24 * time.Hour)
+		count, _ := activityRepo.CountForUser(user.ID, since)
+		c.JSON(http.StatusOK, gin.H{"count": count})
 	})
 
 	routes.RegisterAuth(r, authHandler)
 	routes.RegisterProjects(r, projectHandler)
 	routes.RegisterTasks(r, taskHandler)
 	routes.RegisterDashboard(r, dashboardHandler)
+	routes.RegisterProfile(r, profileHandler)
 
 	return &App{Router: r, DB: db}, nil
 }
@@ -98,6 +111,34 @@ var funcMap = template.FuncMap{
 			return ""
 		}
 		return t.Local().Format("2006-01-02")
+	},
+	"countStatus": func(tasks []models.Task, status string) int {
+		count := 0
+		for _, t := range tasks {
+			if t.Status == status {
+				count++
+			}
+		}
+		return count
+	},
+	"percent": func(n, total int) int {
+		if total == 0 {
+			return 0
+		}
+		return n * 100 / total
+	},
+	"formatActivity": func(t time.Time) string {
+		diff := time.Since(t)
+		switch {
+		case diff < time.Minute:
+			return "agora"
+		case diff < time.Hour:
+			return fmt.Sprintf("%dm atrás", int(diff.Minutes()))
+		case diff < 24*time.Hour:
+			return fmt.Sprintf("%dh atrás", int(diff.Hours()))
+		default:
+			return t.Local().Format("02/01")
+		}
 	},
 }
 
@@ -128,6 +169,8 @@ func buildRenderer() render.HTMLRender {
 	add("tasks/edit", "templates/tasks/edit.html")
 	add("dashboard", "templates/dashboard.html")
 	add("error", "templates/error.html")
+	add("landing", "templates/landing.html")
+	add("profile", "templates/profile.html")
 
 	return r
 }

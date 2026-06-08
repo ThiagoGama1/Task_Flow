@@ -33,9 +33,17 @@
           {{else}}
           <p class="card-text text-muted small mb-3 fst-italic">Sem descrição</p>
           {{end}}
-          <p class="small text-muted mb-3">
+          <p class="small text-muted mb-2">
             <i class="bi bi-person me-1"></i>Criado por <strong>{{.Owner.Name}}</strong>
           </p>
+          {{$total := len .Tasks}}
+          {{if gt $total 0}}
+          {{$done := countStatus .Tasks "done"}}
+          <div class="progress mb-1" style="height:4px;background:rgba(255,255,255,.07);border-radius:2px">
+            <div class="progress-bar" style="width:{{percent $done $total}}%;background:var(--emerald);border-radius:2px;transition:width .4s ease"></div>
+          </div>
+          <small class="text-muted" style="font-size:.74rem">{{$done}} de {{$total}} tarefas concluídas</small>
+          {{end}}
         </div>
         <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
           <a href="/projects/{{.ID}}" class="btn btn-outline-primary btn-sm w-100">

@@ -57,6 +57,22 @@
     </div>
   </div>
 
+  {{/* Barra de filtros + busca */}}
+  <div class="filter-bar mb-3 d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-muted me-1"><i class="bi bi-funnel me-1"></i>Filtrar:</span>
+    <button class="filter-btn active" data-filter="all">Todas</button>
+    <button class="filter-btn" data-filter="mine">Minhas tarefas</button>
+    <span class="vr mx-1" style="border-color:rgba(255,255,255,.1)"></span>
+    <button class="filter-btn-priority" data-priority="high"><i class="bi bi-flag-fill me-1"></i>Alta</button>
+    <button class="filter-btn-priority" data-priority="medium"><i class="bi bi-flag me-1"></i>Média</button>
+    <button class="filter-btn-priority" data-priority="low">Baixa</button>
+    <span class="vr mx-1" style="border-color:rgba(255,255,255,.1)"></span>
+    <div class="search-wrap ms-auto">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" id="taskSearch" class="search-input" placeholder="Buscar tarefa...">
+    </div>
+  </div>
+
   {{/* Quadro Kanban */}}
   <div class="row g-3">
     <div class="col-md-4">
@@ -64,8 +80,10 @@
         <div class="kanban-header bg-warning-subtle text-warning-emphasis">
           <i class="bi bi-circle me-1"></i>A Fazer
           <span class="badge bg-warning text-dark ms-auto">{{len .Todo}}</span>
+          <button class="sort-btn ms-1" data-col="todo" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
+          <button class="sort-btn" data-col="todo" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
         </div>
-        <div class="kanban-body">
+        <div class="kanban-body" data-status="todo">
           {{range .Todo}}{{template "task-card" .}}{{end}}
           {{if not .Todo}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
         </div>
@@ -77,8 +95,10 @@
         <div class="kanban-header bg-info-subtle text-info-emphasis">
           <i class="bi bi-arrow-repeat me-1"></i>Em Andamento
           <span class="badge bg-info text-dark ms-auto">{{len .InProgress}}</span>
+          <button class="sort-btn ms-1" data-col="in_progress" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
+          <button class="sort-btn" data-col="in_progress" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
         </div>
-        <div class="kanban-body">
+        <div class="kanban-body" data-status="in_progress">
           {{range .InProgress}}{{template "task-card" .}}{{end}}
           {{if not .InProgress}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
         </div>
@@ -90,8 +110,10 @@
         <div class="kanban-header bg-success-subtle text-success-emphasis">
           <i class="bi bi-check-circle me-1"></i>Concluído
           <span class="badge bg-success ms-auto">{{len .Done}}</span>
+          <button class="sort-btn ms-1" data-col="done" data-sort="priority" title="Ordenar por prioridade"><i class="bi bi-flag"></i></button>
+          <button class="sort-btn" data-col="done" data-sort="due" title="Ordenar por prazo"><i class="bi bi-calendar3"></i></button>
         </div>
-        <div class="kanban-body">
+        <div class="kanban-body" data-status="done">
           {{range .Done}}{{template "task-card" .}}{{end}}
           {{if not .Done}}<div class="kanban-empty"><i class="bi bi-inbox"></i> Nenhuma tarefa</div>{{end}}
         </div>
@@ -99,65 +121,101 @@
     </div>
   </div>
 
+  {{/* Histórico de atividades */}}
+  {{if .Activities}}
+  <div class="activity-feed mt-4">
+    <h2 class="h6 fw-bold mb-3 text-muted">
+      <i class="bi bi-clock-history me-1"></i>Atividade Recente
+    </h2>
+    <div class="activity-list">
+      {{range .Activities}}
+      <div class="activity-item">
+        <div class="activity-avatar">{{slice .User.Name 0 1}}</div>
+        <div class="activity-body">
+          <span class="activity-user">{{.User.Name}}</span>
+          <span class="activity-action">{{.Action}}</span>
+        </div>
+        <div class="activity-time">{{formatActivity .CreatedAt}}</div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
 </div>
+
+{{/* Input de edição inline oculto */}}
+<input type="text" id="titleEditInput" class="task-title-edit d-none">
 {{end}}
 
-{{/* Card de tarefa — nível raiz para ser reutilizável */}}
+{{/* Card de tarefa */}}
 {{define "task-card"}}
-<div class="task-card">
+<div class="task-card"
+     data-task-id="{{.ID}}"
+     data-project-id="{{.ProjectID}}"
+     data-priority="{{.Priority}}"
+     data-due="{{inputDate .DueDate}}"
+     data-assignee-id="{{if .AssigneeID}}{{deref .AssigneeID}}{{else}}0{{end}}">
   <div class="d-flex justify-content-between align-items-start mb-1">
-    <span class="fw-semibold small">{{.Title}}</span>
-    <div class="dropdown ms-2">
-      <button class="btn btn-sm btn-light border-0 py-0 px-1" data-bs-toggle="dropdown">
-        <i class="bi bi-three-dots-vertical small"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size:.85rem">
-        <li>
-          <a class="dropdown-item" href="/projects/{{.ProjectID}}/tasks/{{.ID}}/edit">
-            <i class="bi bi-pencil me-2 text-secondary"></i>Editar
-          </a>
-        </li>
-        <li><hr class="dropdown-divider my-1"></li>
-        {{if ne .Status "todo"}}
-        <li>
-          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
-            <input type="hidden" name="status" value="todo">
-            <button type="submit" class="dropdown-item">
-              <i class="bi bi-circle me-2 text-warning"></i>Mover para A Fazer
-            </button>
-          </form>
-        </li>
-        {{end}}
-        {{if ne .Status "in_progress"}}
-        <li>
-          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
-            <input type="hidden" name="status" value="in_progress">
-            <button type="submit" class="dropdown-item">
-              <i class="bi bi-arrow-repeat me-2 text-info"></i>Mover para Em Andamento
-            </button>
-          </form>
-        </li>
-        {{end}}
-        {{if ne .Status "done"}}
-        <li>
-          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
-            <input type="hidden" name="status" value="done">
-            <button type="submit" class="dropdown-item">
-              <i class="bi bi-check-circle me-2 text-success"></i>Marcar como Concluído
-            </button>
-          </form>
-        </li>
-        {{end}}
-        <li><hr class="dropdown-divider my-1"></li>
-        <li>
-          <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/delete" method="POST"
-                onsubmit="return confirm('Excluir tarefa?')">
-            <button type="submit" class="dropdown-item text-danger">
-              <i class="bi bi-trash me-2"></i>Excluir
-            </button>
-          </form>
-        </li>
-      </ul>
+    <span class="fw-semibold small task-title" data-task-id="{{.ID}}" data-project-id="{{.ProjectID}}" title="Duplo clique para editar">{{.Title}}</span>
+    <div class="d-flex align-items-center gap-1 ms-2">
+      {{if gt .CommentCount 0}}
+      <span class="badge bg-secondary-subtle text-secondary border" style="font-size:.68rem">
+        <i class="bi bi-chat-dots me-1"></i>{{.CommentCount}}
+      </span>
+      {{end}}
+      <div class="dropdown">
+        <button class="btn btn-sm btn-light border-0 py-0 px-1" data-bs-toggle="dropdown">
+          <i class="bi bi-three-dots-vertical small"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size:.85rem">
+          <li>
+            <a class="dropdown-item" href="/projects/{{.ProjectID}}/tasks/{{.ID}}/edit">
+              <i class="bi bi-pencil me-2 text-secondary"></i>Editar
+            </a>
+          </li>
+          <li><hr class="dropdown-divider my-1"></li>
+          {{if ne .Status "todo"}}
+          <li>
+            <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+              <input type="hidden" name="status" value="todo">
+              <button type="submit" class="dropdown-item">
+                <i class="bi bi-circle me-2 text-warning"></i>Mover para A Fazer
+              </button>
+            </form>
+          </li>
+          {{end}}
+          {{if ne .Status "in_progress"}}
+          <li>
+            <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+              <input type="hidden" name="status" value="in_progress">
+              <button type="submit" class="dropdown-item">
+                <i class="bi bi-arrow-repeat me-2 text-info"></i>Mover para Em Andamento
+              </button>
+            </form>
+          </li>
+          {{end}}
+          {{if ne .Status "done"}}
+          <li>
+            <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/status" method="POST">
+              <input type="hidden" name="status" value="done">
+              <button type="submit" class="dropdown-item">
+                <i class="bi bi-check-circle me-2 text-success"></i>Marcar como Concluído
+              </button>
+            </form>
+          </li>
+          {{end}}
+          <li><hr class="dropdown-divider my-1"></li>
+          <li>
+            <form action="/projects/{{.ProjectID}}/tasks/{{.ID}}/delete" method="POST"
+                  onsubmit="return confirm('Excluir tarefa?')">
+              <button type="submit" class="dropdown-item text-danger">
+                <i class="bi bi-trash me-2"></i>Excluir
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
   {{if .Description}}
@@ -183,4 +241,182 @@
     {{end}}
   </div>
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+const CURRENT_USER_ID = {{.User.ID}};
+
+document.querySelectorAll('.kanban-body').forEach(function(col) {
+  Sortable.create(col, {
+    group: 'kanban',
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd: function(evt) {
+      var card = evt.item;
+      var taskId = card.dataset.taskId;
+      var projectId = card.dataset.projectId;
+      var newStatus = evt.to.dataset.status;
+      var fromCol = evt.from;
+      var fromIdx = evt.oldIndex;
+      if (!taskId || !newStatus) return;
+      fetch('/projects/' + projectId + '/tasks/' + taskId + '/status', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'status=' + encodeURIComponent(newStatus),
+        redirect: 'manual'
+      }).then(function(r) {
+        if (r.type !== 'opaqueredirect' && !r.ok) {
+          fromCol.insertBefore(card, fromCol.children[fromIdx] || null);
+        }
+      }).catch(function() {
+        fromCol.insertBefore(card, fromCol.children[fromIdx] || null);
+      });
+    }
+  });
+});
+
+/* ── Filtros ── */
+var activeFilter = 'all';
+var activePriority = null;
+var activeSearch = '';
+
+function applyFilters() {
+  document.querySelectorAll('.task-card').forEach(function(card) {
+    var assigneeId = parseInt(card.dataset.assigneeId || '0');
+    var priority = card.dataset.priority;
+    var title = card.querySelector('.task-title') ? card.querySelector('.task-title').textContent.toLowerCase() : '';
+    var show = true;
+    if (activeFilter === 'mine' && assigneeId !== CURRENT_USER_ID) show = false;
+    if (activePriority && priority !== activePriority) show = false;
+    if (activeSearch && !title.includes(activeSearch)) show = false;
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    activeFilter = this.dataset.filter;
+    applyFilters();
+  });
+});
+
+document.querySelectorAll('.filter-btn-priority').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    if (this.classList.contains('active')) {
+      this.classList.remove('active');
+      activePriority = null;
+    } else {
+      document.querySelectorAll('.filter-btn-priority').forEach(function(b) { b.classList.remove('active'); });
+      this.classList.add('active');
+      activePriority = this.dataset.priority;
+    }
+    applyFilters();
+  });
+});
+
+var searchInput = document.getElementById('taskSearch');
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    activeSearch = this.value.toLowerCase().trim();
+    applyFilters();
+  });
+}
+
+/* ── Ordenação ── */
+var priorityOrder = {high: 0, medium: 1, low: 2};
+var sortState = {};
+
+document.querySelectorAll('.sort-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var colStatus = this.dataset.col;
+    var sortBy = this.dataset.sort;
+    var key = colStatus + '_' + sortBy;
+    var body = document.querySelector('.kanban-body[data-status="' + colStatus + '"]');
+    if (!body) return;
+
+    var dir = sortState[key] === 'asc' ? 'desc' : 'asc';
+    sortState[key] = dir;
+
+    var cards = Array.from(body.querySelectorAll('.task-card'));
+    cards.sort(function(a, b) {
+      var result;
+      if (sortBy === 'priority') {
+        var pa = priorityOrder[a.dataset.priority] != null ? priorityOrder[a.dataset.priority] : 1;
+        var pb = priorityOrder[b.dataset.priority] != null ? priorityOrder[b.dataset.priority] : 1;
+        result = pa - pb;
+      } else {
+        var da = a.dataset.due || '9999-99-99';
+        var db = b.dataset.due || '9999-99-99';
+        result = da < db ? -1 : da > db ? 1 : 0;
+      }
+      return dir === 'desc' ? -result : result;
+    });
+    cards.forEach(function(c) { body.appendChild(c); });
+
+    document.querySelectorAll('.sort-btn[data-col="' + colStatus + '"]').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    this.classList.add('active');
+    this.title = (sortBy === 'priority' ? 'Prioridade' : 'Prazo') + (dir === 'asc' ? ' ↑' : ' ↓');
+  });
+});
+
+/* ── Edição inline do título ── */
+var editInput = document.getElementById('titleEditInput');
+var editingCard = null;
+var editingSpan = null;
+
+document.addEventListener('dblclick', function(e) {
+  var span = e.target.closest('.task-title');
+  if (!span) return;
+  editingSpan = span;
+  editingCard = span.closest('.task-card');
+  var rect = span.getBoundingClientRect();
+  editInput.value = span.textContent.trim();
+  editInput.classList.remove('d-none');
+  editInput.style.position = 'fixed';
+  editInput.style.top = rect.top + 'px';
+  editInput.style.left = rect.left + 'px';
+  editInput.style.width = Math.max(rect.width, 180) + 'px';
+  editInput.focus();
+  editInput.select();
+});
+
+editInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') commitEdit();
+  if (e.key === 'Escape') cancelEdit();
+});
+
+editInput.addEventListener('blur', function() {
+  commitEdit();
+});
+
+function commitEdit() {
+  if (!editingCard) return;
+  var newTitle = editInput.value.trim();
+  if (newTitle.length >= 2 && newTitle !== editingSpan.textContent.trim()) {
+    var taskId = editingCard.dataset.taskId;
+    var projectId = editingCard.dataset.projectId;
+    fetch('/projects/' + projectId + '/tasks/' + taskId + '/title', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title: newTitle})
+    }).then(function(r){ return r.json(); }).then(function(d) {
+      if (d.title) editingSpan.textContent = d.title;
+    });
+  }
+  cancelEdit();
+}
+
+function cancelEdit() {
+  editInput.classList.add('d-none');
+  editingCard = null;
+  editingSpan = null;
+}
+</script>
 {{end}}

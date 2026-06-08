@@ -16,5 +16,7 @@ func RegisterTasks(r *gin.Engine, h *handlers.TaskHandler) {
 		tasks.POST("/:taskID", h.Update)
 		tasks.POST("/:taskID/status", h.UpdateStatus)
 		tasks.POST("/:taskID/delete", h.Delete)
+		tasks.POST("/:taskID/comments", h.CreateComment)
+		tasks.POST("/:taskID/title", h.UpdateTitle)
 	}
 }

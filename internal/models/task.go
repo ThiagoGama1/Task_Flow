@@ -15,6 +15,7 @@ type Task struct {
 	DueDate     *time.Time
 	ProjectID   uint       `gorm:"not null"`
 	Project     Project
-	AssigneeID  *uint
-	Assignee    *User
+	AssigneeID   *uint
+	Assignee     *User
+	CommentCount int `gorm:"-"`
 }

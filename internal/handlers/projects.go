@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"taskflow/internal/models"
@@ -10,12 +11,17 @@ import (
 )
 
 type ProjectHandler struct {
-	projectRepo repositories.ProjectRepository
-	userRepo    repositories.UserRepository
+	projectRepo  repositories.ProjectRepository
+	userRepo     repositories.UserRepository
+	activityRepo repositories.ActivityRepository
 }
 
-func NewProjectHandler(projectRepo repositories.ProjectRepository, userRepo repositories.UserRepository) *ProjectHandler {
-	return &ProjectHandler{projectRepo: projectRepo, userRepo: userRepo}
+func NewProjectHandler(
+	projectRepo repositories.ProjectRepository,
+	userRepo repositories.UserRepository,
+	activityRepo repositories.ActivityRepository,
+) *ProjectHandler {
+	return &ProjectHandler{projectRepo: projectRepo, userRepo: userRepo, activityRepo: activityRepo}
 }
 
 type CreateProjectInput struct {
@@ -97,6 +103,8 @@ func (h *ProjectHandler) Show(c *gin.Context) {
 		return
 	}
 
+	activities, _ := h.activityRepo.FindByProjectID(id, 20)
+
 	c.HTML(http.StatusOK, "projects/show", gin.H{
 		"Title":      project.Title,
 		"User":       user,
@@ -104,6 +112,7 @@ func (h *ProjectHandler) Show(c *gin.Context) {
 		"Todo":       filterByStatus(project.Tasks, "todo"),
 		"InProgress": filterByStatus(project.Tasks, "in_progress"),
 		"Done":       filterByStatus(project.Tasks, "done"),
+		"Activities": activities,
 	})
 }
 
@@ -161,6 +170,7 @@ func (h *ProjectHandler) AddMember(c *gin.Context) {
 	}
 
 	_ = h.projectRepo.AddMember(project.ID, newMember.ID)
+	h.logActivity(id, user.ID, fmt.Sprintf("adicionou %s ao projeto", newMember.Name))
 	c.Redirect(http.StatusFound, "/projects/"+c.Param("id")+"/members")
 }
 
@@ -181,11 +191,19 @@ func (h *ProjectHandler) RemoveMember(c *gin.Context) {
 
 func (h *ProjectHandler) renderMembersWithError(c *gin.Context, user *models.User, id uint, errMsg string) {
 	project, _ := h.projectRepo.WithMembers(id)
-	c.HTML(http.StatusOK, "projects/members", gin.H{
+	c.HTML(http.StatusUnprocessableEntity, "projects/members", gin.H{
 		"Title":   "Membros — " + project.Title,
 		"User":    user,
 		"Project": project,
 		"Error":   errMsg,
+	})
+}
+
+func (h *ProjectHandler) logActivity(projectID, userID uint, action string) {
+	_ = h.activityRepo.Create(&models.ActivityLog{
+		ProjectID: projectID,
+		UserID:    userID,
+		Action:    action,
 	})
 }
 

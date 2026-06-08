@@ -1,0 +1,51 @@
+{{define "landing"}}{{template "base" .}}{{end}}
+
+{{define "title"}}Organize seu grupo. Entregue no prazo.{{end}}
+
+{{define "main-class"}}p-0{{end}}
+
+{{define "content"}}
+<section class="landing-hero">
+  <div class="container text-center" style="position:relative;z-index:2">
+    <div class="landing-badge">Gerenciamento de projetos acadêmicos</div>
+    <h1 class="landing-headline">Organize seu grupo.<br>Entregue no prazo.</h1>
+    <p class="landing-sub">Quadro Kanban, tarefas com prioridade e prazo, dashboard pessoal — tudo em um só lugar para o seu time.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="/auth/register" class="btn btn-primary btn-lg">
+        <i class="bi bi-rocket-takeoff me-2"></i>Criar conta grátis
+      </a>
+      <a href="/auth/login" class="btn btn-outline-secondary btn-lg">Já tenho conta</a>
+    </div>
+  </div>
+</section>
+
+<section class="container py-5 pb-6">
+  <div class="text-center mb-5">
+    <p class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.1em">Funcionalidades</p>
+    <h2 class="h3 fw-bold" style="color:var(--text-bright)">Tudo que o seu grupo precisa</h2>
+  </div>
+  <div class="row g-4 justify-content-center">
+    <div class="col-md-4">
+      <div class="landing-feature-card">
+        <div class="lfc-icon"><i class="bi bi-kanban-fill"></i></div>
+        <h4>Quadro Kanban</h4>
+        <p>Visualize o andamento com colunas A Fazer, Em Andamento e Concluído. Arraste tarefas entre colunas com drag-and-drop.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="landing-feature-card">
+        <div class="lfc-icon lfc-amber"><i class="bi bi-flag-fill"></i></div>
+        <h4>Prioridade e Prazo</h4>
+        <p>Defina prioridade (alta, média, baixa) e prazo para cada tarefa. Alertas visuais destacam tarefas em atraso.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="landing-feature-card">
+        <div class="lfc-icon lfc-emerald"><i class="bi bi-speedometer2"></i></div>
+        <h4>Dashboard Pessoal</h4>
+        <p>Veja todas as suas tarefas atribuídas agrupadas por urgência — atrasadas, vencem hoje e próximas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{{end}}

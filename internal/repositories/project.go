@@ -38,6 +38,31 @@ func (r *projectRepo) WithMembers(id uint) (*models.Project, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(project.Tasks) > 0 {
+		type countRow struct {
+			TaskID uint
+			Count  int
+		}
+		var rows []countRow
+		taskIDs := make([]uint, len(project.Tasks))
+		for i, t := range project.Tasks {
+			taskIDs[i] = t.ID
+		}
+		r.db.Model(&models.Comment{}).
+			Select("task_id, count(*) as count").
+			Where("task_id IN ? AND deleted_at IS NULL", taskIDs).
+			Group("task_id").
+			Scan(&rows)
+		counts := make(map[uint]int, len(rows))
+		for _, row := range rows {
+			counts[row.TaskID] = row.Count
+		}
+		for i := range project.Tasks {
+			project.Tasks[i].CommentCount = counts[project.Tasks[i].ID]
+		}
+	}
+
 	return &project, nil
 }
 
@@ -47,6 +72,7 @@ func (r *projectRepo) FindByMemberID(userID uint) ([]models.Project, error) {
 		Joins("JOIN project_members ON project_members.project_id = projects.id").
 		Where("project_members.user_id = ?", userID).
 		Preload("Owner").
+		Preload("Tasks").
 		Order("projects.created_at DESC").
 		Find(&projects).Error
 	return projects, err
@@ -77,5 +103,6 @@ func (r *projectRepo) IsMember(projectID, userID uint) bool {
 }
 
 func (r *projectRepo) Delete(id uint) error {
+	r.db.Where("project_id = ?", id).Delete(&models.Task{})
 	return r.db.Delete(&models.Project{}, id).Error
 }

@@ -1,11 +1,20 @@
 package repositories
 
-import "taskflow/internal/models"
+import (
+	"taskflow/internal/models"
+	"time"
+)
 
 type UserRepository interface {
 	Create(user *models.User) error
 	FindByEmail(email string) (*models.User, error)
 	FindByID(id uint) (*models.User, error)
+	Update(user *models.User) error
+}
+
+type CommentRepository interface {
+	Create(comment *models.Comment) error
+	FindByTaskID(taskID uint) ([]models.Comment, error)
 }
 
 type ProjectRepository interface {
@@ -25,4 +34,10 @@ type TaskRepository interface {
 	FindAssignedTo(userID uint) ([]models.Task, error)
 	Update(task *models.Task) error
 	Delete(id uint) error
+}
+
+type ActivityRepository interface {
+	Create(log *models.ActivityLog) error
+	FindByProjectID(projectID uint, limit int) ([]models.ActivityLog, error)
+	CountForUser(userID uint, since time.Time) (int64, error)
 }

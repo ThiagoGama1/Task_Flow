@@ -11,6 +11,16 @@
   </div>
 
   {{if .Overdue}}
+  <div class="alert alert-overdue-banner d-flex align-items-center gap-3 mb-4 py-3">
+    <i class="bi bi-exclamation-triangle-fill fs-4 flex-shrink-0"></i>
+    <div>
+      <strong>Atenção!</strong> Você tem <strong>{{len .Overdue}}</strong> {{if eq (len .Overdue) 1}}tarefa atrasada{{else}}tarefas atrasadas{{end}}.
+      Revise e atualize o status o quanto antes.
+    </div>
+  </div>
+  {{end}}
+
+  {{if .Overdue}}
   <div class="mb-4 dash-section-overdue">
     <h2 class="h6 fw-bold text-danger mb-2">
       <i class="bi bi-exclamation-circle-fill me-1"></i>Atrasadas

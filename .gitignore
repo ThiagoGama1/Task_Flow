@@ -1,6 +1,9 @@
 # Ambiente
 .env
 
+# Claude Code
+.claude/
+
 # Binário compilado
 taskflow
 taskflow.exe

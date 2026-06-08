@@ -18,10 +18,12 @@ func init() {
 }
 
 type testEnv struct {
-	router      *gin.Engine
-	userRepo    *mockUserRepo
-	projectRepo *mockProjectRepo
-	taskRepo    *mockTaskRepo
+	router       *gin.Engine
+	userRepo     *mockUserRepo
+	projectRepo  *mockProjectRepo
+	taskRepo     *mockTaskRepo
+	commentRepo  *mockCommentRepo
+	activityRepo *mockActivityRepo
 }
 
 func newTestEnv(t *testing.T) *testEnv {
@@ -30,6 +32,8 @@ func newTestEnv(t *testing.T) *testEnv {
 	userRepo := newMockUserRepo()
 	projectRepo := newMockProjectRepo()
 	taskRepo := newMockTaskRepo()
+	commentRepo := newMockCommentRepo()
+	activityRepo := newMockActivityRepo()
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -43,18 +47,20 @@ func newTestEnv(t *testing.T) *testEnv {
 	r.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"ok": true}) })
 
 	authH := handlers.NewAuthHandler(userRepo)
-	projectH := handlers.NewProjectHandler(projectRepo, userRepo)
-	taskH := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo)
+	projectH := handlers.NewProjectHandler(projectRepo, userRepo, activityRepo)
+	taskH := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo, commentRepo, activityRepo)
 
 	routes.RegisterAuth(r, authH)
 	routes.RegisterProjects(r, projectH)
 	routes.RegisterTasks(r, taskH)
 
 	return &testEnv{
-		router:      r,
-		userRepo:    userRepo,
-		projectRepo: projectRepo,
-		taskRepo:    taskRepo,
+		router:       r,
+		userRepo:     userRepo,
+		projectRepo:  projectRepo,
+		taskRepo:     taskRepo,
+		commentRepo:  commentRepo,
+		activityRepo: activityRepo,
 	}
 }
 
