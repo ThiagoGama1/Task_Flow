@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o taskflow ./cmd/server
+RUN go build -o taskflow ./cmd/server && go build -o seed ./cmd/seed
 
 FROM alpine:3.20
 
@@ -16,6 +16,7 @@ ENV TZ=America/Sao_Paulo
 WORKDIR /app
 
 COPY --from=builder /app/taskflow .
+COPY --from=builder /app/seed .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
 
