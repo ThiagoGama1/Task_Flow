@@ -40,4 +40,5 @@ type ActivityRepository interface {
 	Create(log *models.ActivityLog) error
 	FindByProjectID(projectID uint, limit int) ([]models.ActivityLog, error)
 	CountForUser(userID uint, since time.Time) (int64, error)
+	ListForUser(userID uint, since time.Time, limit int) ([]models.ActivityLog, error)
 }

@@ -78,6 +78,35 @@ func NewApp(cfg *config.Config) (*App, error) {
 		c.JSON(http.StatusOK, gin.H{"count": count})
 	})
 
+	r.GET("/api/notifications/list", middleware.Required(), func(c *gin.Context) {
+		user := c.MustGet("current_user").(*models.User)
+		since := time.Now().Add(-24 * time.Hour)
+		logs, _ := activityRepo.ListForUser(user.ID, since, 10)
+		type item struct {
+			UserName  string `json:"user_name"`
+			Action    string `json:"action"`
+			TimeAgo   string `json:"time_ago"`
+			ProjectID uint   `json:"project_id"`
+		}
+		items := make([]item, 0, len(logs))
+		for _, l := range logs {
+			diff := time.Since(l.CreatedAt)
+			var ago string
+			switch {
+			case diff < time.Minute:
+				ago = "agora"
+			case diff < time.Hour:
+				ago = fmt.Sprintf("%dm atrás", int(diff.Minutes()))
+			case diff < 24*time.Hour:
+				ago = fmt.Sprintf("%dh atrás", int(diff.Hours()))
+			default:
+				ago = l.CreatedAt.Local().Format("02/01")
+			}
+			items = append(items, item{UserName: l.User.Name, Action: l.Action, TimeAgo: ago, ProjectID: l.ProjectID})
+		}
+		c.JSON(http.StatusOK, gin.H{"notifications": items})
+	})
+
 	routes.RegisterAuth(r, authHandler)
 	routes.RegisterProjects(r, projectHandler)
 	routes.RegisterTasks(r, taskHandler)

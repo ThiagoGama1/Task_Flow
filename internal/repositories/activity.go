@@ -39,3 +39,16 @@ func (r *activityRepo) CountForUser(userID uint, since time.Time) (int64, error)
 		Count(&count).Error
 	return count, err
 }
+
+func (r *activityRepo) ListForUser(userID uint, since time.Time, limit int) ([]models.ActivityLog, error) {
+	var logs []models.ActivityLog
+	err := r.db.
+		Joins("JOIN project_members ON project_members.project_id = activity_logs.project_id").
+		Where("project_members.user_id = ? AND activity_logs.user_id != ? AND activity_logs.created_at > ?",
+			userID, userID, since).
+		Preload("User").
+		Order("activity_logs.created_at DESC").
+		Limit(limit).
+		Find(&logs).Error
+	return logs, err
+}

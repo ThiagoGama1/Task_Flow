@@ -38,12 +38,10 @@ func main() {
 		log.Fatalf("migrate: %v", err)
 	}
 
-	// ── Usuários ─────────────────────────────────────────────────────────────
 	u1 := seedUser(db, "Demo User", "demo@taskflow.app", "demo123")
 	u2 := seedUser(db, "Ana Lima", "ana@taskflow.app", "demo123")
 	u3 := seedUser(db, "Carlos Souza", "carlos@taskflow.app", "demo123")
 
-	// ── Projetos ─────────────────────────────────────────────────────────────
 	p1 := seedProject(db, "Site Institucional",
 		"Redesign completo do site da empresa com nova identidade visual.",
 		u1, []models.User{*u1, *u2})
@@ -52,20 +50,18 @@ func main() {
 		"Desenvolvimento do aplicativo para Android e iOS.",
 		u2, []models.User{*u1, *u2, *u3})
 
-	// ── Datas ─────────────────────────────────────────────────────────────────
 	now := time.Now()
 	pt := func(t time.Time) *time.Time {
 		d := time.Date(t.Year(), t.Month(), t.Day(), 12, 0, 0, 0, time.UTC)
 		return &d
 	}
-	overdue1 := pt(now.AddDate(0, 0, -5))  // 5 dias atrás
-	overdue2 := pt(now.AddDate(0, 0, -1))  // ontem
+	overdue1 := pt(now.AddDate(0, 0, -5))
+	overdue2 := pt(now.AddDate(0, 0, -1))
 	today    := pt(now)
 	week1    := pt(now.AddDate(0, 0, 4))
 	week2    := pt(now.AddDate(0, 0, 10))
 	month1   := pt(now.AddDate(0, 1, 0))
 
-	// ── Tarefas do Projeto 1 ─────────────────────────────────────────────────
 	t1a := seedTask(db, p1.ID, taskInput{
 		Title:      "Criar wireframes das páginas",
 		Desc:       "Elaborar wireframes de todas as páginas principais no Figma.",
@@ -111,7 +107,6 @@ func main() {
 		DueDate:  month1,
 	})
 
-	// ── Tarefas do Projeto 2 ─────────────────────────────────────────────────
 	seedTask(db, p2.ID, taskInput{
 		Title:      "Definir arquitetura do app",
 		Desc:       "Escolha de framework React Native vs Flutter e padrão de estado.",
@@ -158,7 +153,6 @@ func main() {
 		DueDate:  week2,
 	})
 
-	// ── Comentários ───────────────────────────────────────────────────────────
 	seedComment(db, t1a.ID, u1.ID, "Wireframes aprovados pelo cliente! Ficaram ótimos.")
 	seedComment(db, t1a.ID, u2.ID, "Vou iniciar o desenvolvimento com base nessa versão.")
 	seedComment(db, t1b.ID, u1.ID, "Precisamos de validação server-side além do client-side.")
@@ -169,7 +163,6 @@ func main() {
 	seedComment(db, t2b.ID, u2.ID, "Lembrar de testar no iOS 15 também, teve quebras antes.")
 	seedComment(db, t2c.ID, u2.ID, "FCM configurado no Firebase Console. Credenciais no Vault.")
 
-	// ── Histórico de atividades ────────────────────────────────────────────────
 	seedActivity(db, p1.ID, u2.ID, `criou a tarefa "Criar wireframes das páginas"`)
 	seedActivity(db, p1.ID, u2.ID, `moveu "Criar wireframes das páginas" para Concluído`)
 	seedActivity(db, p1.ID, u1.ID, `criou a tarefa "Implementar página de contato"`)
@@ -184,7 +177,6 @@ func main() {
 	seedActivity(db, p2.ID, u3.ID, `comentou na tarefa "Tela de login e cadastro"`)
 	seedActivity(db, p2.ID, u2.ID, `adicionou membro carlos@taskflow.app ao projeto`)
 
-	// ── Resumo ────────────────────────────────────────────────────────────────
 	fmt.Println("\n============================================================")
 	fmt.Println("  SEED CONCLUÍDO — TaskFlow")
 	fmt.Println("============================================================")
@@ -207,8 +199,6 @@ func main() {
 	fmt.Println("\n  Acesse: http://localhost:3000/auth/login")
 	fmt.Println("============================================================\n")
 }
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
 
 func seedUser(db *gorm.DB, name, email, password string) *models.User {
 	var u models.User

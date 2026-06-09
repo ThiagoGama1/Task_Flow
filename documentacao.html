@@ -12,14 +12,13 @@
   .cover {
     height: 100vh; display: flex; flex-direction: column;
     justify-content: center; align-items: center; text-align: center;
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-    color: #fff; page-break-after: always;
+    background: #fff; color: #1a1a1a; page-break-after: always;
   }
-  .cover h1 { font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
-  .cover .subtitle { font-size: 1.2rem; opacity: .85; margin-top: .5rem; }
-  .cover .divider { width: 80px; height: 4px; background: rgba(255,255,255,.5); margin: 2rem auto; border-radius: 2px; }
-  .cover .info { font-size: .95rem; line-height: 2; opacity: .9; }
-  .cover .info strong { display: block; font-size: 1.1rem; }
+  .cover h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: 0; color: #111; }
+  .cover .subtitle { font-size: 1rem; color: #444; margin-top: .4rem; }
+  .cover .divider { width: 50px; height: 1px; background: #999; margin: 2rem auto; }
+  .cover .info { font-size: .9rem; line-height: 2; color: #333; }
+  .cover .info strong { display: block; font-size: .95rem; font-weight: 600; color: #111; margin-bottom: .2rem; }
 
   /* ── LAYOUT ── */
   .page { max-width: 860px; margin: 0 auto; padding: 40px 50px; }
@@ -88,6 +87,12 @@
     .er-title, th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     pre, .arch { page-break-inside: avoid; }
     h2 { page-break-before: auto; }
+    .er-box { page-break-inside: avoid; break-inside: avoid; }
+    .er-wrap { page-break-inside: avoid; break-inside: avoid; }
+    .callout { page-break-inside: avoid; break-inside: avoid; }
+    table { page-break-inside: avoid; break-inside: avoid; }
+    h3 { page-break-after: avoid; break-after: avoid; }
+    h4 { page-break-after: avoid; break-after: avoid; }
   }
 
   @page { margin: 15mm 15mm; }
@@ -97,14 +102,12 @@
 
 <!-- ═══════════════════════════════ CAPA ═══════════════════════════════ -->
 <div class="cover">
-  <div style="font-size:4rem; margin-bottom:1rem;">📋</div>
   <h1>TaskFlow</h1>
   <p class="subtitle">Gerenciador de Projetos Acadêmicos</p>
   <div class="divider"></div>
   <div class="info">
     <strong>Desenvolvimento Web — CC5M</strong>
-    Arthur Vieira &nbsp;·&nbsp; Rafael Fassina &nbsp;·&nbsp; Thiago Gama<br>
-    Apresentação: 10 de junho de 2026
+    Arthur Vieira &nbsp;·&nbsp; Rafael Fassina &nbsp;·&nbsp; Thiago Gama
   </div>
 </div>
 
@@ -128,6 +131,8 @@
   <li><strong>Membros:</strong> adição e remoção de membros por e-mail (somente o dono pode gerenciar).</li>
   <li><strong>Tarefas:</strong> criação, edição, exclusão e atualização de status por qualquer membro.</li>
   <li><strong>Atribuição:</strong> cada tarefa pode ser atribuída a um membro específico do projeto.</li>
+  <li><strong>Comentários:</strong> membros podem comentar em tarefas para registrar atualizações e discussões.</li>
+  <li><strong>Histórico de atividades:</strong> cada projeto mantém um log das ações relevantes (criação de tarefas, adição de membros, etc.).</li>
   <li><strong>Autorização:</strong> rotas protegidas; operações destrutivas restritas ao dono do projeto.</li>
 </ul>
 
@@ -196,6 +201,32 @@
       <div class="er-row"><span class="er-fk">FK</span> user_id <span class="er-type">→ users.id</span></div>
     </div>
   </div>
+
+  <div class="er-box" style="min-width:220px">
+    <div class="er-title">comments</div>
+    <div class="er-body">
+      <div class="er-row"><span class="er-pk">PK</span> id <span class="er-type">uint</span></div>
+      <div class="er-row">body <span class="er-type">text NOT NULL</span></div>
+      <div class="er-row"><span class="er-fk">FK</span> task_id <span class="er-type">→ tasks.id</span></div>
+      <div class="er-row"><span class="er-fk">FK</span> user_id <span class="er-type">→ users.id</span></div>
+      <div class="er-row">created_at <span class="er-type">timestamptz</span></div>
+      <div class="er-row">updated_at <span class="er-type">timestamptz</span></div>
+      <div class="er-row">deleted_at <span class="er-type">timestamptz (soft delete)</span></div>
+    </div>
+  </div>
+
+  <div class="er-box" style="min-width:240px">
+    <div class="er-title">activity_logs</div>
+    <div class="er-body">
+      <div class="er-row"><span class="er-pk">PK</span> id <span class="er-type">uint</span></div>
+      <div class="er-row">action <span class="er-type">text NOT NULL</span></div>
+      <div class="er-row"><span class="er-fk">FK</span> project_id <span class="er-type">→ projects.id</span></div>
+      <div class="er-row"><span class="er-fk">FK</span> user_id <span class="er-type">→ users.id</span></div>
+      <div class="er-row">created_at <span class="er-type">timestamptz</span></div>
+      <div class="er-row">updated_at <span class="er-type">timestamptz</span></div>
+      <div class="er-row">deleted_at <span class="er-type">timestamptz (soft delete)</span></div>
+    </div>
+  </div>
 </div>
 
 <p>O GORM gerencia <code>deleted_at</code> automaticamente (soft delete): registros excluídos não são
@@ -209,12 +240,14 @@ ao Flask com Blueprints, adaptada para Go/Gin:</p>
 
 <div class="arch">
 taskflow/
-├── cmd/server/          ← ponto de entrada (main.go)
+├── cmd/
+│   ├── server/          ← ponto de entrada (main.go)
+│   └── seed/            ← script de dados iniciais
 ├── internal/
 │   ├── app/             ← Application Factory (NewApp)
 │   ├── config/          ← leitura de variáveis de ambiente
 │   ├── database/        ← conexão e AutoMigrate
-│   ├── models/          ← User, Project, Task (GORM)
+│   ├── models/          ← User, Project, Task, Comment, ActivityLog (GORM)
 │   ├── repositories/    ← interfaces + implementações GORM
 │   ├── handlers/        ← lógica HTTP por domínio
 │   ├── routes/          ← registro de rotas ("Blueprints")
@@ -269,13 +302,14 @@ Isso permite instanciar a aplicação em testes sem subir o servidor.</p>
     if err != nil { return nil, err }
     database.Migrate(db)
 
-    userRepo    := repositories.NewUserRepository(db)
-    projectRepo := repositories.NewProjectRepository(db)
-    taskRepo    := repositories.NewTaskRepository(db)
+    userRepo     := repositories.NewUserRepository(db)
+    projectRepo  := repositories.NewProjectRepository(db)
+    taskRepo     := repositories.NewTaskRepository(db)
+    activityRepo := repositories.NewActivityRepository(db)
 
     authHandler    := handlers.NewAuthHandler(userRepo)
-    projectHandler := handlers.NewProjectHandler(projectRepo, userRepo)
-    taskHandler    := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo)
+    projectHandler := handlers.NewProjectHandler(projectRepo, userRepo, activityRepo)
+    taskHandler    := handlers.NewTaskHandler(taskRepo, projectRepo, userRepo, activityRepo)
 
     r := gin.Default()
     r.Use(sessions.Sessions("taskflow_session", cookie.NewStore(...)))
@@ -398,11 +432,17 @@ func Required() gin.HandlerFunc {
 <p>O handler agrupa as tarefas por status antes de passar ao template:</p>
 
 <pre><code>func (h *ProjectHandler) Show(c *gin.Context) {
-    project, _ := h.projectRepo.WithMembers(id)
+    project, err := h.projectRepo.WithMembers(id)
+    if err != nil {
+        c.HTML(404, "error", gin.H{"Error": "Projeto não encontrado."})
+        return
+    }
+    activities, _ := h.activityRepo.FindByProjectID(id, 20)
     c.HTML(200, "projects/show", gin.H{
         "Todo":       filterByStatus(project.Tasks, "todo"),
         "InProgress": filterByStatus(project.Tasks, "in_progress"),
         "Done":       filterByStatus(project.Tasks, "done"),
+        "Activities": activities,
     })
 }
 
@@ -458,7 +498,7 @@ func filterByStatus(tasks []models.Task, status string) []models.Task {
 
 <h3>Pré-requisitos</h3>
 <ul>
-  <li>Go 1.21+ instalado</li>
+  <li>Go 1.25+ instalado</li>
   <li>Docker e Docker Compose instalados</li>
 </ul>
 
@@ -541,20 +581,28 @@ interfaces dos repositórios reais. Isso permite testar toda a lógica HTTP sem 
 
 <h3>Exemplo de teste</h3>
 <pre><code>func TestCreateProjectWithValidDataRedirects(t *testing.T) {
-    e := newTestEnv(t)
-    user := e.seedUser("Ana", "ana@test.com", "123456")
+    env := newTestEnv(t)
+    cookie := loginAndGetCookie(t, env, "criador@test.com", "senha123")
 
-    // Autentica via sessão
-    req := httptest.NewRequest("POST", "/projects",
-        strings.NewReader("title=Meu+Projeto&description=Descricao"))
+    form := url.Values{
+        "title":       {"Trabalho de Redes"},
+        "description": {"Projeto para a disciplina"},
+    }
+    req := httptest.NewRequest(http.MethodPost, "/projects",
+        strings.NewReader(form.Encode()))
     req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-    injectSession(req, e.router, int(user.ID))
+    req.AddCookie(cookie)
 
     w := httptest.NewRecorder()
-    e.router.ServeHTTP(w, req)
+    env.router.ServeHTTP(w, req)
 
-    assert.Equal(t, 302, w.Code)
-    assert.Equal(t, 1, len(e.projectRepo.projects))
+    if w.Code != http.StatusFound {
+        t.Errorf("esperado redirect 302, obteve %d", w.Code)
+    }
+    projects, _ := env.projectRepo.FindByMemberID(1)
+    if len(projects) == 0 {
+        t.Error("projeto deveria ter sido criado")
+    }
 }</code></pre>
 
 <!-- ─── 8. DESAFIOS ─── -->

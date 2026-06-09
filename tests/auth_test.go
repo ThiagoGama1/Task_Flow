@@ -70,7 +70,6 @@ func TestRegisterCreatesUserAndRedirects(t *testing.T) {
 		t.Errorf("redirect esperado para /projects, obteve %q", loc)
 	}
 
-	// Confirma que o usuário foi persistido no mock
 	user, err := env.userRepo.FindByEmail("arthur@test.com")
 	if err != nil {
 		t.Fatal("usuário não foi salvo após cadastro")
@@ -173,7 +172,6 @@ func TestLogoutRequiresAuthentication(t *testing.T) {
 	w := httptest.NewRecorder()
 	env.router.ServeHTTP(w, req)
 
-	// Sem sessão ativa deve redirecionar para login
 	if w.Code != http.StatusFound {
 		t.Errorf("esperado redirect (302), obteve %d", w.Code)
 	}

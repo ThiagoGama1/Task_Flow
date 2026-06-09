@@ -219,3 +219,7 @@ func (m *mockActivityRepo) FindByProjectID(projectID uint, limit int) ([]models.
 func (m *mockActivityRepo) CountForUser(userID uint, since time.Time) (int64, error) {
 	return 0, nil
 }
+
+func (m *mockActivityRepo) ListForUser(userID uint, since time.Time, limit int) ([]models.ActivityLog, error) {
+	return nil, nil
+}

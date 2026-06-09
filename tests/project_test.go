@@ -11,7 +11,6 @@ import (
 func loginAndGetCookie(t *testing.T, env *testEnv, email, password string) *http.Cookie {
 	t.Helper()
 
-	// Registra
 	form := url.Values{
 		"name":             {"Usuário Teste"},
 		"email":            {email},
@@ -92,7 +91,6 @@ func TestCreateProjectWithValidDataRedirects(t *testing.T) {
 		t.Errorf("esperado redirect 302, obteve %d", w.Code)
 	}
 
-	// Confirma que o projeto foi criado no mock
 	projects, _ := env.projectRepo.FindByMemberID(1)
 	if len(projects) == 0 {
 		t.Error("projeto deveria ter sido criado")
@@ -103,7 +101,7 @@ func TestCreateProjectValidationRejectsShortTitle(t *testing.T) {
 	env := newTestEnv(t)
 	cookie := loginAndGetCookie(t, env, "val@test.com", "senha123")
 
-	form := url.Values{"title": {"AB"}, "description": {""}} // < 3 chars
+	form := url.Values{"title": {"AB"}, "description": {""}}
 	req := httptest.NewRequest(http.MethodPost, "/projects",
 		strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -123,17 +121,14 @@ func TestProjectMembershipLogic(t *testing.T) {
 	member := env.seedUser("Rafael", "rafael@test.com", "hash")
 	project := env.seedProject("Projeto X", owner.ID)
 
-	// Owner já é membro (seedProject adiciona)
 	if !env.projectRepo.IsMember(project.ID, owner.ID) {
 		t.Error("owner deveria ser membro automaticamente")
 	}
 
-	// Rafael ainda não é membro
 	if env.projectRepo.IsMember(project.ID, member.ID) {
 		t.Error("Rafael não deveria ser membro ainda")
 	}
 
-	// Adiciona Rafael
 	if err := env.projectRepo.AddMember(project.ID, member.ID); err != nil {
 		t.Fatalf("erro ao adicionar membro: %v", err)
 	}
@@ -141,7 +136,6 @@ func TestProjectMembershipLogic(t *testing.T) {
 		t.Error("Rafael deveria ser membro após adição")
 	}
 
-	// Remove Rafael (owner não pode ser removido pelo teste de regra)
 	_ = env.projectRepo.RemoveMember(project.ID, member.ID)
 	if env.projectRepo.IsMember(project.ID, member.ID) {
 		t.Error("Rafael não deveria mais ser membro")

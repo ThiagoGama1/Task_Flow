@@ -103,6 +103,25 @@ func (r *projectRepo) IsMember(projectID, userID uint) bool {
 }
 
 func (r *projectRepo) Delete(id uint) error {
-	r.db.Where("project_id = ?", id).Delete(&models.Task{})
-	return r.db.Delete(&models.Project{}, id).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var taskIDs []uint
+		if err := tx.Model(&models.Task{}).Where("project_id = ?", id).Pluck("id", &taskIDs).Error; err != nil {
+			return err
+		}
+		if len(taskIDs) > 0 {
+			if err := tx.Where("task_id IN ?", taskIDs).Delete(&models.Comment{}).Error; err != nil {
+				return err
+			}
+		}
+		if err := tx.Where("project_id = ?", id).Delete(&models.Task{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("project_id = ?", id).Delete(&models.ActivityLog{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("DELETE FROM project_members WHERE project_id = ?", id).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&models.Project{}, id).Error
+	})
 }

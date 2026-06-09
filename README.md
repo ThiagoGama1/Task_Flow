@@ -2,13 +2,13 @@
 
 Gerenciador de projetos com quadro Kanban, sistema de tarefas com prioridade e prazo, e dashboard pessoal de tarefas atribuídas.
 
-**Stack:** Go 1.21+ · Gin · GORM · PostgreSQL · Bootstrap 5
+**Stack:** Go 1.25+ · Gin · GORM · PostgreSQL · Bootstrap 5
 
 ---
 
 ## Pré-requisitos
 
-- **Go 1.21+** — https://go.dev/dl/
+- **Go 1.25+** — https://go.dev/dl/
 - **PostgreSQL** — https://www.postgresql.org/download/
 
 Para verificar se já estão instalados:
@@ -25,8 +25,8 @@ psql --version
 ### 1. Clone o repositório
 
 ```bash
-git clone <url-do-repositorio>
-cd taskflow
+git clone https://github.com/ThiagoGama1/Task_Flow
+cd Task_Flow
 ```
 
 ### 2. Crie o banco de dados no PostgreSQL
@@ -72,7 +72,6 @@ go mod tidy
 ```
 
 ### 5. Rode o servidor
-cd "C:\Users\thiagogama\Desktop\des web\taskflow"
 
 ```bash
 go run ./cmd/server
@@ -95,7 +94,7 @@ taskflow/
 │   ├── database/       # Conexão e migrations automáticas
 │   ├── handlers/       # Controllers HTTP (auth, projects, tasks, dashboard)
 │   ├── middleware/      # Autenticação de sessão
-│   ├── models/         # Entidades GORM (User, Project, Task)
+│   ├── models/         # Entidades GORM (User, Project, Task, Comment, ActivityLog)
 │   ├── repositories/   # Camada de acesso ao banco de dados
 │   └── routes/         # Registro de rotas por domínio
 ├── static/css/         # CSS customizado
@@ -126,6 +125,16 @@ taskflow/
 ```bash
 go test ./tests/... -v
 ```
+
+---
+
+## Populando o banco com dados de exemplo
+
+```bash
+go run ./cmd/seed
+```
+
+Cria usuários, projetos, tarefas e comentários de exemplo para facilitar a demonstração.
 
 ---
 

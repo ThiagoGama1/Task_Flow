@@ -190,7 +190,11 @@ func (h *ProjectHandler) RemoveMember(c *gin.Context) {
 }
 
 func (h *ProjectHandler) renderMembersWithError(c *gin.Context, user *models.User, id uint, errMsg string) {
-	project, _ := h.projectRepo.WithMembers(id)
+	project, err := h.projectRepo.WithMembers(id)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/projects")
+		return
+	}
 	c.HTML(http.StatusUnprocessableEntity, "projects/members", gin.H{
 		"Title":   "Membros — " + project.Title,
 		"User":    user,

@@ -1,7 +1,10 @@
 package tests
 
 import (
+	"fmt"
+	"html/template"
 	"net/http"
+	"os"
 	"taskflow/internal/handlers"
 	"taskflow/internal/middleware"
 	"taskflow/internal/models"
@@ -12,6 +15,17 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
+
+func TestMain(m *testing.M) {
+	gin.SetMode(gin.TestMode)
+	code := m.Run()
+	if code == 0 {
+		fmt.Println("\n✓ Todos os 21 testes passaram.")
+	} else {
+		fmt.Println("\n✗ Um ou mais testes falharam. Veja o output acima.")
+	}
+	os.Exit(code)
+}
 
 func init() {
 	gin.SetMode(gin.TestMode)
@@ -37,6 +51,7 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.SetHTMLTemplate(template.Must(template.New("tasks/new").Parse(`{{define "tasks/new"}}{{end}}`)))
 
 	store := cookie.NewStore([]byte("test-secret"))
 	r.Use(sessions.Sessions("taskflow_session", store))

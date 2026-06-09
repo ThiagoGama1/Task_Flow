@@ -72,7 +72,6 @@ func TestTaskStatusValidationInRoute(t *testing.T) {
 	env := newTestEnv(t)
 	cookie := loginAndGetCookie(t, env, "taskroute@test.com", "senha123")
 
-	// Obtém ID do projeto criado após login
 	projects, _ := env.projectRepo.FindByMemberID(1)
 	if len(projects) == 0 {
 		// Cria projeto
@@ -93,7 +92,6 @@ func TestTaskStatusValidationInRoute(t *testing.T) {
 
 	projectID := projects[0].ID
 
-	// Tenta criar tarefa com status inválido
 	form := url.Values{
 		"title":  {"Tarefa"},
 		"status": {"invalido"},
