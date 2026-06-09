@@ -259,9 +259,22 @@ document.querySelectorAll('.kanban-body').forEach(function(col) {
       var taskId = card.dataset.taskId;
       var projectId = card.dataset.projectId;
       var newStatus = evt.to.dataset.status;
+      var fromStatus = evt.from.dataset.status;
       var fromCol = evt.from;
+      var toCol = evt.to;
       var fromIdx = evt.oldIndex;
       if (!taskId || !newStatus) return;
+
+      if (newStatus !== fromStatus) {
+        originalOrder[fromStatus] = originalOrder[fromStatus].filter(function(c) { return c !== card; });
+        originalOrder[newStatus] = originalOrder[newStatus].concat([card]);
+        var toEmpty = toCol.querySelector('.kanban-empty');
+        if (toEmpty) toEmpty.style.display = 'none';
+        var fromCards = fromCol.querySelectorAll('.task-card');
+        var fromEmpty = fromCol.querySelector('.kanban-empty');
+        if (fromEmpty && fromCards.length === 0) fromEmpty.style.display = '';
+      }
+
       fetch('/projects/' + projectId + '/tasks/' + taskId + '/status', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -269,9 +282,17 @@ document.querySelectorAll('.kanban-body').forEach(function(col) {
         redirect: 'manual'
       }).then(function(r) {
         if (r.type !== 'opaqueredirect' && !r.ok) {
+          if (newStatus !== fromStatus) {
+            originalOrder[newStatus] = originalOrder[newStatus].filter(function(c) { return c !== card; });
+            originalOrder[fromStatus].splice(fromIdx, 0, card);
+          }
           fromCol.insertBefore(card, fromCol.children[fromIdx] || null);
         }
       }).catch(function() {
+        if (newStatus !== fromStatus) {
+          originalOrder[newStatus] = originalOrder[newStatus].filter(function(c) { return c !== card; });
+          originalOrder[fromStatus].splice(fromIdx, 0, card);
+        }
         fromCol.insertBefore(card, fromCol.children[fromIdx] || null);
       });
     }

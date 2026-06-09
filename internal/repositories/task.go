@@ -41,5 +41,10 @@ func (r *taskRepo) FindAssignedTo(userID uint) ([]models.Task, error) {
 }
 
 func (r *taskRepo) Delete(id uint) error {
-	return r.db.Delete(&models.Task{}, id).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("task_id = ?", id).Delete(&models.Comment{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&models.Task{}, id).Error
+	})
 }

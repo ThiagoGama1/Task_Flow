@@ -4,9 +4,11 @@
 # Claude Code
 .claude/
 
-# Binário compilado
+# Binários compilados
 taskflow
 taskflow.exe
+seed
+seed.exe
 
 # Dependências (Go baixa automaticamente com go mod)
 vendor/
